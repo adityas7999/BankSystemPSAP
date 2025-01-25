@@ -100,7 +100,7 @@ void login()
                 printf("Invalid employee index\n");
                 return;
             }
-            loadCustomers(); // Load customers after setting the file
+            loadCustomers(); 
            
             return;
         }
@@ -147,7 +147,7 @@ void loadEmployee()
     FILE *file = fopen("employee.txt", "r");
     if (!file)
     {
-        // File doesn't exist yet, probably first run
+        
         return;
     }
 
@@ -434,6 +434,7 @@ void completeKYC()
 {
     int accountNumber;
     char kycID[MAX_KYC_DOC_LEN];
+    char proofNumber[MAX_AADHAR_LEN];
     int kycOption;
 
     printf("Enter account number: ");
@@ -443,7 +444,26 @@ void completeKYC()
     {
         if (customers[i].accountNumber == accountNumber)
         {
-            printf("Choose KYC Document Type:\n");
+            printf("\nEnter your details for KYC verification:\n");
+
+            printf("Name: ");
+            clearInputBuffer();
+            fgets(customers[i].name, sizeof(customers[i].name), stdin);
+            strtok(customers[i].name, "\n");
+
+            printf("Age: ");
+            scanf("%d", &customers[i].age);
+
+            printf("Gender: ");
+            clearInputBuffer();
+            fgets(customers[i].gender, sizeof(customers[i].gender), stdin);
+            strtok(customers[i].gender, "\n");
+
+            printf("Email: ");
+            fgets(customers[i].email, sizeof(customers[i].email), stdin);
+            strtok(customers[i].email, "\n");
+
+            printf("\nChoose Proof of Address for KYC Verification:\n");
             printf("1. Passport\n");
             printf("2. Voter's Identity Card\n");
             printf("3. Driving Licence\n");
@@ -454,39 +474,44 @@ void completeKYC()
 
             switch (kycOption)
             {
-            case 1:
-                strcpy(kycID, "Passport");
-                break;
-            case 2:
-                strcpy(kycID, "Voter's Identity Card");
-                break;
-            case 3:
-                strcpy(kycID, "Driving Licence");
-                break;
-            case 4:
-                strcpy(kycID, "Aadhaar Letter/Card");
-                break;
-            case 5:
-                strcpy(kycID, "NREGA Card");
-                break;
-            default:
-                printf("Invalid choice! Please try again.\n");
-                return;
+                case 1:
+                    strcpy(kycID, "Passport");
+                    break;
+                case 2:
+                    strcpy(kycID, "Voter's Identity Card");
+                    break;
+                case 3:
+                    strcpy(kycID, "Driving Licence");
+                    break;
+                case 4:
+                    strcpy(kycID, "Aadhaar Letter/Card");
+                    break;
+                case 5:
+                    strcpy(kycID, "NREGA Card");
+                    break;
+                default:
+                    printf("Invalid choice! Please try again.\n");
+                    return;
             }
+
+            printf("Enter %s number: ", kycID);
+            clearInputBuffer();
+            fgets(proofNumber, sizeof(proofNumber), stdin);
+            strtok(proofNumber, "\n");
 
             strcpy(customers[i].kycDocument, kycID);
             customers[i].isKYCCompleted = 1;
 
-            saveCustomers();
+            saveCustomers(); 
 
-            printf("KYC completed successfully using %s!\n", kycID);
+            printf("\nYour KYC details have been submitted successfully using %s.\n", kycID);
+            printf("Your document number %s is under verification.\n", proofNumber);
+            printf("A confirmation email will be sent to %s upon successful verification.\n", customers[i].email);
             return;
         }
-        else
-        {
-            printf("Account not found!\n");
-        }
     }
+
+    printf("Account not found!\n");
 }
 
 void deleteAccount()
@@ -565,7 +590,7 @@ void program(){
 
 int main()
 {
-  
+    printf("Bank Employee login\n");
     login();
     
     return 0;
