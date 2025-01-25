@@ -1,32 +1,131 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #define MAX_CUSTOMERS 100
+#define MAX_NAME_LEN 50
+#define MAX_EMAIL_LEN 50
+#define MAX_MOBILE_LEN 15
+#define MAX_ADDRESS_LEN 100
+#define MAX_GENDER_LEN 10
+#define MAX_ACCOUNT_TYPE_LEN 20
+#define MAX_AADHAR_LEN 20
+#define MAX_KYC_DOC_LEN 50
+#define MAX_CARD_NUMBER_LEN 20
 
 typedef struct
 {
     int accountNumber;
-    char name[50];
-    char email[50];
-    int mobile[15];
-    char address[100];
+    char name[MAX_NAME_LEN];
+    char email[MAX_EMAIL_LEN];
+    char mobile[MAX_MOBILE_LEN];
+    char address[MAX_ADDRESS_LEN];
     int age;
-    char gender[10];
-    char accountType[20];
-    char aadhar[20];
+    char gender[MAX_GENDER_LEN];
+    char accountType[MAX_ACCOUNT_TYPE_LEN];
+    char aadhar[MAX_AADHAR_LEN];
     int isAadharLinked;
+    int isKYCCompleted;
+    char kycDocument[MAX_KYC_DOC_LEN];
     float balance;
+    char creditCardNumber[MAX_CARD_NUMBER_LEN];
+    char debitCardNumber[MAX_CARD_NUMBER_LEN];
 } Customer;
 
 Customer customers[MAX_CUSTOMERS];
 int customerCount = 0;
 
+const char *CUSTOMER_FILE = "customers.dat";
+const char *TRANSACTION_FILE = "transactions.log";
+
+void clearInputBuffer();
+int isValidEmail(const char *email);
+int isValidMobile(const char *mobile);
+void loadCustomers();
+void saveCustomers();
+void logTransaction(int accountNumber, const char *action, float amount);
 void createAccount();
 void displayAccount();
 void depositMoney();
 void withdrawMoney();
+void showTransactionHistory();
 void linkAadhar();
-void updateDetails();
+void completeKYC();
+void deleteAccount();
+void showMenu();
+
+void clearInputBuffer()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+}
+
+int isValidEmail(const char *email)
+{
+    const char *at = strchr(email, '@');
+    const char *dot = strrchr(email, '.');
+    return at && dot && at < dot;
+}
+
+int isValidMobile(const char *mobile)
+{
+    if (strlen(mobile) != 10)
+        return 0;
+    for (int i = 0; i < 10; i++)
+        if (!isdigit(mobile[i]))
+            return 0;
+    return 1;
+}
+
+void loadCustomers()
+{
+    FILE *file = fopen(CUSTOMER_FILE, "rb");
+    if (file)
+    {
+        fread(&customerCount, sizeof(int), 1, file);
+        fread(customers, sizeof(Customer), customerCount, file);
+        fclose(file);
+    }
+}
+
+void saveCustomers()
+{
+    FILE *file = fopen(CUSTOMER_FILE, "wb");
+    if (file)
+    {
+        fwrite(&customerCount, sizeof(int), 1, file);
+        fwrite(customers, sizeof(Customer), customerCount, file);
+        fclose(file);
+    }
+}
+
+void logTransaction(int accountNumber, const char *action, float amount)
+{
+    FILE *file = fopen(TRANSACTION_FILE, "a");
+    if (file)
+    {
+        fprintf(file, "Account: %d | Action: %s | Amount: %.2f\n", accountNumber, action, amount);
+        fclose(file);
+    }
+}
+
+void showMenu()
+{
+    printf("\n====== ADITYA BANK OF INDIA (ABI) ======\n");
+    printf("           CUSTOMER PORTAL\n");
+    printf("1. Create a new account\n");
+    printf("2. View account details\n");
+    printf("3. Deposit money\n");
+    printf("4. Withdraw money\n");
+    printf("5. View transaction history\n");
+    printf("6. Link Aadhar\n");
+    printf("7. Complete KYC\n");
+    printf("8. Delete account\n");
+    printf("9. Exit\n");
+    printf("========================================\n");
+    printf("Enter your choice: ");
+}
 
 void createAccount()
 {
@@ -40,23 +139,55 @@ void createAccount()
     newCustomer.accountNumber = customerCount + 1;
 
     printf("Enter name: ");
-    scanf("%s", newCustomer.name);
-    printf("Enter email: ");
-    scanf("%s", newCustomer.email);
-    printf("Enter mobile number: ");
-    scanf("%s", newCustomer.mobile);
+    fgets(newCustomer.name, sizeof(newCustomer.name), stdin);
+    strtok(newCustomer.name, "\n");
+
+    do
+    {
+        printf("Enter email: ");
+        fgets(newCustomer.email, sizeof(newCustomer.email), stdin);
+        strtok(newCustomer.email, "\n");
+        if (!isValidEmail(newCustomer.email))
+            printf("Invalid email format. Please try again.\n");
+    } while (!isValidEmail(newCustomer.email));
+
+    do
+    {
+        printf("Enter mobile number (10 digits): ");
+        fgets(newCustomer.mobile, sizeof(newCustomer.mobile), stdin);
+        strtok(newCustomer.mobile, "\n");
+        if (!isValidMobile(newCustomer.mobile))
+            printf("Invalid mobile number. Please try again.\n");
+    } while (!isValidMobile(newCustomer.mobile));
+
     printf("Enter address: ");
-    scanf(" %s", newCustomer.address);
-    printf("Enter age: ");
-    scanf("%d", &newCustomer.age);
+    fgets(newCustomer.address, sizeof(newCustomer.address), stdin);
+    strtok(newCustomer.address, "\n");
+
+    do
+    {
+        printf("Enter age (18+): ");
+        scanf("%d", &newCustomer.age);
+        clearInputBuffer();
+        if (newCustomer.age < 18)
+            printf("Age must be 18 or older. Please try again.\n");
+    } while (newCustomer.age < 18);
+
     printf("Enter gender: ");
-    scanf("%s", newCustomer.gender);
+    fgets(newCustomer.gender, sizeof(newCustomer.gender), stdin);
+    strtok(newCustomer.gender, "\n");
+
     printf("Enter account type (Savings/Current): ");
-    scanf("%s", newCustomer.accountType);
+    fgets(newCustomer.accountType, sizeof(newCustomer.accountType), stdin);
+    strtok(newCustomer.accountType, "\n");
+
     newCustomer.balance = 0.0;
-    newCustomer.isAadharLinked = 0; // Initially, Aadhar is not linked
+    newCustomer.isAadharLinked = 0;
+    newCustomer.isKYCCompleted = 0;
 
     customers[customerCount++] = newCustomer;
+
+    saveCustomers();
 
     printf("Account created successfully! Your account number is %d.\n", newCustomer.accountNumber);
 }
@@ -66,12 +197,14 @@ void displayAccount()
     int accountNumber;
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
+    clearInputBuffer();
 
     for (int i = 0; i < customerCount; i++)
     {
         if (customers[i].accountNumber == accountNumber)
         {
-            printf("\nAccount Number: %d\n", customers[i].accountNumber);
+            printf("\n--- Account Details ---\n");
+            printf("Account Number: %d\n", customers[i].accountNumber);
             printf("Name: %s\n", customers[i].name);
             printf("Email: %s\n", customers[i].email);
             printf("Mobile: %s\n", customers[i].mobile);
@@ -80,104 +213,164 @@ void displayAccount()
             printf("Gender: %s\n", customers[i].gender);
             printf("Account Type: %s\n", customers[i].accountType);
             printf("Balance: %.2f\n", customers[i].balance);
-            printf("Aadhar Linked: %s\n", customers[i].isAadharLinked ? "Yes" : "No");
             if (customers[i].isAadharLinked)
-            {
-                printf("Aadhar Number: %s\n", customers[i].aadhar);
-            }
-            return;
+                printf("Aadhar Linked: %s\n", customers[i].aadhar);
+            if (customers[i].isKYCCompleted)
+                printf("KYC Completed: Yes\n");
+            else
+                printf("KYC Completed: No\n");
         }
+        else 
+        {
+           printf("Account not found!\n"); 
+        }
+        
     }
 
-    printf("Account not found!\n");
+    
 }
 
-void depositMoney() {
+void depositMoney()
+{
     int accountNumber;
     float amount;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
+    clearInputBuffer();
 
-    for (int i = 0; i < customerCount; i++) {
-        if (customers[i].accountNumber == accountNumber) {
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].accountNumber == accountNumber)
+        {
             printf("Enter amount to deposit: ");
             scanf("%f", &amount);
+            clearInputBuffer();
 
-            if (amount <= 0) {
-                printf("Invalid amount!\n");
+            if (amount <= 0)
+            {
+                printf("Invalid amount! Must be greater than 0.\n");
                 return;
             }
 
             customers[i].balance += amount;
-            printf("Amount deposited successfully! New balance: %.2f\n", customers[i].balance);
+            saveCustomers();
+            logTransaction(accountNumber, "Deposit", amount);
+
+            printf("Deposit successful! New balance: %.2f\n", customers[i].balance);
             return;
+        }
+        else 
+        {
+           printf("Account not found!\n"); 
         }
     }
 
-    printf("Account not found!\n");
+    
 }
 
-void withdrawMoney() {
+void withdrawMoney()
+{
     int accountNumber;
     float amount;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
+    clearInputBuffer();
 
-    for (int i = 0; i < customerCount; i++) {
-        if (customers[i].accountNumber == accountNumber) {
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].accountNumber == accountNumber)
+        {
             printf("Enter amount to withdraw: ");
             scanf("%f", &amount);
+            clearInputBuffer();
 
-            if (amount <= 0) {
-                printf("Invalid amount!\n");
-                return;
-            }
-
-            if (amount > customers[i].balance) {
-                printf("Insufficient balance!\n");
+            if (amount <= 0 || amount > customers[i].balance)
+            {
+                printf("Invalid amount! Must be within available balance.\n");
                 return;
             }
 
             customers[i].balance -= amount;
-            printf("Amount withdrawn successfully! New balance: %.2f\n", customers[i].balance);
+            saveCustomers();
+            logTransaction(accountNumber, "Withdrawal", amount);
+
+            printf("Withdrawal successful! New balance: %.2f\n", customers[i].balance);
             return;
         }
-    }    
+        else 
+        {
+           printf("Account not found!\n"); 
+        }
+    }
 
-    printf("Account not found!\n");
+    
+}
+
+void showTransactionHistory()
+{
+    FILE *file = fopen(TRANSACTION_FILE, "r");
+    if (file)
+    {
+        char line[256];
+        printf("\n--- Transaction History ---\n");
+        while (fgets(line, sizeof(line), file))
+        {
+            printf("%s", line);
+        }
+        fclose(file);
+    }
+    else
+    {
+        printf("No transaction history found.\n");
+    }
 }
 
 void linkAadhar()
 {
     int accountNumber;
-    char aadhar[20];
+    char aadhar[MAX_AADHAR_LEN];
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
+    clearInputBuffer();
 
     for (int i = 0; i < customerCount; i++)
     {
         if (customers[i].accountNumber == accountNumber)
         {
+            if (customers[i].isAadharLinked)
+            {
+                printf("Aadhar is already linked.\n");
+                return;
+            }
+
             printf("Enter Aadhar number: ");
-            scanf("%s", aadhar);
+            fgets(aadhar, sizeof(aadhar), stdin);
+            strtok(aadhar, "\n");
 
             strcpy(customers[i].aadhar, aadhar);
             customers[i].isAadharLinked = 1;
+            saveCustomers();
 
             printf("Aadhar linked successfully!\n");
             return;
         }
+        else 
+        {
+           printf("Account not found!\n"); 
+        }
     }
 
-    printf("Account not found!\n");
+    
 }
 
-void updateDetails()
+void completeKYC()
 {
     int accountNumber;
+    char kycID[MAX_KYC_DOC_LEN];
+    int kycOption;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
@@ -186,102 +379,132 @@ void updateDetails()
     {
         if (customers[i].accountNumber == accountNumber)
         {
-            printf("Update email: ");
-            scanf("%s", customers[i].email);
-            printf("Update mobile number: ");
-            scanf("%s", customers[i].mobile);
-            printf("Update address: ");
-            scanf(" %s", customers[i].address);
+            printf("Choose KYC Document Type:\n");
+            printf("1. Passport\n");
+            printf("2. Voter's Identity Card\n");
+            printf("3. Driving Licence\n");
+            printf("4. Aadhaar Letter/Card\n");
+            printf("5. NREGA Card\n");
+            printf("Enter your choice: ");
+            scanf("%d", &kycOption);
 
-            printf("Details updated successfully!\n");
+            switch (kycOption)
+            {
+                case 1:
+                    strcpy(kycID, "Passport");
+                    break;
+                case 2:
+                    strcpy(kycID, "Voter's Identity Card");
+                    break;
+                case 3:
+                    strcpy(kycID, "Driving Licence");
+                    break;
+                case 4:
+                    strcpy(kycID, "Aadhaar Letter/Card");
+                    break;
+                case 5:
+                    strcpy(kycID, "NREGA Card");
+                    break;
+                default:
+                    printf("Invalid choice! Please try again.\n");
+                    return;
+            }
+
+            strcpy(customers[i].kycDocument, kycID);
+            customers[i].isKYCCompleted = 1; 
+
+            saveCustomers(); 
+
+            printf("KYC completed successfully using %s!\n", kycID);
             return;
+        }
+        else 
+        {
+           printf("Account not found!\n"); 
         }
     }
 
-    printf("Account not found!\n");
+    
 }
-void main()
+
+
+void deleteAccount()
 {
-    int choice, a;
+    int accountNumber;
+    printf("Enter account number to delete: ");
+    scanf("%d", &accountNumber);
+    clearInputBuffer();
+
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].accountNumber == accountNumber)
+        {
+
+            for (int j = i; j < customerCount - 1; j++)
+            {
+                customers[j] = customers[j + 1];
+            }
+            customerCount--;
+            saveCustomers();
+
+            printf("Account deleted successfully!\n");
+            return;
+        }
+        else 
+        {
+           printf("Account not found!\n"); 
+        }
+    }
+
+    
+}
+
+int main()
+{
+    int choice;
+    loadCustomers();
+
     do
     {
-        printf("ADITYA BANK OF INDIA (ABI)\n");
-        printf("     CUSTOMER PORTAL      \n\n\n");
-        printf("1. To create new account and display of bank account\n");
-        printf("2. To deposit and withdraw money from bank account\n");
-        printf("3. To link aadhar to existing bank account and display of aadhar linked accounts\n");
-        printf("4. Updation of mobile,address and  email of existing bank account\n");
-        printf("5. New credit card \n");
-        printf("6. New debit card \n");
-        printf("7. Delete bank account \n");
-        printf("8. exit\n\n");
-        printf("\nEnter your choice: ");
+        showMenu();
         scanf("%d", &choice);
+        clearInputBuffer();
+
         switch (choice)
         {
         case 1:
-            do
-            {
-                printf("1. Create Account\n");
-                printf("2. View Account Details\n");
-                printf("3. Exit\n");
-                printf("\nEnter your choice: ");
-                scanf("%d", &a);
-                switch (a)
-                {
-                case 1:
-                    createAccount();
-                    break;
-                case 2:
-                    displayAccount();
-                    break;
-                case 3:
-                    printf("Exiting. Thank you!\n");
-                    break;
-                }
-            } while (a != 3);
-
+            createAccount();
             break;
         case 2:
-            do
-            {
-                printf("1. Deposit Money\n");
-                printf("2. Withdraw Money \n");
-                printf("3. Exit\n");
-                printf("\nEnter your choice: ");
-                scanf("%d", &a);
-                switch (a)
-                {
-                case 1:
-                    depositMoney();
-                    break;
-                case 2:
-                    withdrawMoney();
-
-                    break;
-                case 3:
-                    printf("Exiting. Thank you!\n");
-                    break;
-                }
-            } while (a != 3);
-
+            displayAccount();
             break;
-            // case 3:
-
-            //     break;
-            // case 4:
-
-            //     break;
-            // case 5:
-
-            // case 6:
-            // case 7:
-
+        case 3:
+            depositMoney();
+            break;
+        case 4:
+            withdrawMoney();
+            break;
+        case 5:
+            showTransactionHistory();
+            break;
+        case 6:
+            linkAadhar();
+            break;
+        case 7:
+            completeKYC();
+            break;
         case 8:
-            printf("Exiting program. Thank you!\n");
+            deleteAccount();
+            break;
 
+        case 9:
+            printf("Exiting program. Thank you!\n");
+            break;
         default:
             printf("Invalid choice! Please try again.\n");
         }
-    } while (choice != 8);
+    } while (choice != 9);
+
+    saveCustomers();
+    return 0;
 }
