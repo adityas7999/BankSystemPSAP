@@ -12,6 +12,14 @@
 #define MAX_AADHAR_LEN 20
 #define MAX_KYC_DOC_LEN 50
 #define MAX_CARD_NUMBER_LEN 20
+typedef struct
+{
+    char username[10];
+    char password[8];
+} employees;
+
+employees employee[3];
+int employeeCount = 0;
 
 typedef struct
 {
@@ -34,16 +42,19 @@ typedef struct
 
 Customer customers[MAX_CUSTOMERS];
 int customerCount = 0;
+int user=0;
 
-const char *CUSTOMER_FILE = "customers.dat";
+const char *EMPLOYEE_FILE = "employee.txt";
+const char *CUSTOMER_FILE;
 const char *TRANSACTION_FILE = "transactions.log";
 
 void clearInputBuffer();
 int isValidEmail(const char *email);
 int isValidMobile(const char *mobile);
+void loadEmployee();
 void loadCustomers();
 void saveCustomers();
-void logTransaction(int accountNumber, const char *action, float amount);
+void logTransaction(int accountNumber, const char *action, float amount, int user);
 void createAccount();
 void displayAccount();
 void depositMoney();
@@ -53,7 +64,49 @@ void linkAadhar();
 void completeKYC();
 void deleteAccount();
 void showMenu();
+void program();
 
+void login()
+{
+    loadEmployee();
+    char username1[10];
+    char password1[8];
+    printf("Enter your username: ");
+    scanf("%s", username1);
+    printf("Enter your password (8 chars): ");
+    scanf("%s", password1);
+    for (int i = 0; i < employeeCount; i++)
+    {
+        if (strcmp(employee[i].username, username1) == 0 && strcmp(employee[i].password, password1) == 0)
+        {
+            switch (i)
+            {
+            case 0:
+                CUSTOMER_FILE = "customers0.dat";
+                user=0;
+                program();
+                break;
+            case 1:
+                CUSTOMER_FILE = "customers1.dat";
+                user=1;
+                program();
+                break;
+            case 2:
+                CUSTOMER_FILE = "customers2.dat";
+                user=2;
+                program();
+                break;
+            default:
+                printf("Invalid employee index\n");
+                return;
+            }
+            loadCustomers(); // Load customers after setting the file
+           
+            return;
+        }
+    }
+    printf("Entered details are incorrect\n");
+}
 void clearInputBuffer()
 {
     int c;
@@ -89,6 +142,26 @@ void loadCustomers()
     }
 }
 
+void loadEmployee()
+{
+    FILE *file = fopen("employee.txt", "r");
+    if (!file)
+    {
+        // File doesn't exist yet, probably first run
+        return;
+    }
+
+    employeeCount = 0;
+    while (fscanf(file, "%s %s\n",
+                  employee[employeeCount].username,
+                  employee[employeeCount].password) != EOF)
+    {
+        employeeCount++;
+    }
+
+    fclose(file);
+}
+
 void saveCustomers()
 {
     FILE *file = fopen(CUSTOMER_FILE, "wb");
@@ -100,12 +173,12 @@ void saveCustomers()
     }
 }
 
-void logTransaction(int accountNumber, const char *action, float amount)
+void logTransaction(int accountNumber, const char *action, float amount,int user)
 {
     FILE *file = fopen(TRANSACTION_FILE, "a");
     if (file)
     {
-        fprintf(file, "Account: %d | Action: %s | Amount: %.2f\n", accountNumber, action, amount);
+        fprintf(file, "User: %d | Account: %d | Action: %s | Amount: %.2f\n", user, accountNumber, action, amount);
         fclose(file);
     }
 }
@@ -220,14 +293,11 @@ void displayAccount()
             else
                 printf("KYC Completed: No\n");
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
-        
     }
-
-    
 }
 
 void depositMoney()
@@ -255,18 +325,16 @@ void depositMoney()
 
             customers[i].balance += amount;
             saveCustomers();
-            logTransaction(accountNumber, "Deposit", amount);
+            logTransaction(accountNumber, "Deposit", amount, user);
 
             printf("Deposit successful! New balance: %.2f\n", customers[i].balance);
             return;
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
     }
-
-    
 }
 
 void withdrawMoney()
@@ -294,18 +362,16 @@ void withdrawMoney()
 
             customers[i].balance -= amount;
             saveCustomers();
-            logTransaction(accountNumber, "Withdrawal", amount);
+            logTransaction(accountNumber, "Withdrawal", amount, user);
 
             printf("Withdrawal successful! New balance: %.2f\n", customers[i].balance);
             return;
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
     }
-
-    
 }
 
 void showTransactionHistory()
@@ -357,13 +423,11 @@ void linkAadhar()
             printf("Aadhar linked successfully!\n");
             return;
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
     }
-
-    
 }
 
 void completeKYC()
@@ -390,43 +454,40 @@ void completeKYC()
 
             switch (kycOption)
             {
-                case 1:
-                    strcpy(kycID, "Passport");
-                    break;
-                case 2:
-                    strcpy(kycID, "Voter's Identity Card");
-                    break;
-                case 3:
-                    strcpy(kycID, "Driving Licence");
-                    break;
-                case 4:
-                    strcpy(kycID, "Aadhaar Letter/Card");
-                    break;
-                case 5:
-                    strcpy(kycID, "NREGA Card");
-                    break;
-                default:
-                    printf("Invalid choice! Please try again.\n");
-                    return;
+            case 1:
+                strcpy(kycID, "Passport");
+                break;
+            case 2:
+                strcpy(kycID, "Voter's Identity Card");
+                break;
+            case 3:
+                strcpy(kycID, "Driving Licence");
+                break;
+            case 4:
+                strcpy(kycID, "Aadhaar Letter/Card");
+                break;
+            case 5:
+                strcpy(kycID, "NREGA Card");
+                break;
+            default:
+                printf("Invalid choice! Please try again.\n");
+                return;
             }
 
             strcpy(customers[i].kycDocument, kycID);
-            customers[i].isKYCCompleted = 1; 
+            customers[i].isKYCCompleted = 1;
 
-            saveCustomers(); 
+            saveCustomers();
 
             printf("KYC completed successfully using %s!\n", kycID);
             return;
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
     }
-
-    
 }
-
 
 void deleteAccount()
 {
@@ -450,20 +511,14 @@ void deleteAccount()
             printf("Account deleted successfully!\n");
             return;
         }
-        else 
+        else
         {
-           printf("Account not found!\n"); 
+            printf("Account not found!\n");
         }
     }
-
-    
 }
-
-int main()
-{
+void program(){
     int choice;
-    loadCustomers();
-
     do
     {
         showMenu();
@@ -506,5 +561,12 @@ int main()
     } while (choice != 9);
 
     saveCustomers();
+}
+
+int main()
+{
+  
+    login();
+    
     return 0;
 }
