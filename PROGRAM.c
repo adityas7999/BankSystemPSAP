@@ -84,27 +84,28 @@ void login()
             case 0:
                 CUSTOMER_FILE = "customers0.dat";
                 user=0;
-                program();
+                
                 break;
             case 1:
                 CUSTOMER_FILE = "customers1.dat";
                 user=1;
-                program();
+                
                 break;
             case 2:
                 CUSTOMER_FILE = "customers2.dat";
                 user=2;
-                program();
+               
                 break;
             default:
                 printf("Invalid employee index\n");
                 return;
             }
-            loadCustomers(); 
-           
+           loadCustomers();
             return;
         }
+        
     }
+    user=9;
     printf("Entered details are incorrect\n");
 }
 void clearInputBuffer()
@@ -542,9 +543,17 @@ void deleteAccount()
         }
     }
 }
-void program(){
+
+    
+
+int main()
+{
+    printf("Bank Employee login\n");
+    login();
     int choice;
-    do
+    if (user!=9)
+    {
+        do
     {
         showMenu();
         scanf("%d", &choice);
@@ -586,12 +595,9 @@ void program(){
     } while (choice != 9);
 
     saveCustomers();
-}
 
-int main()
-{
-    printf("Bank Employee login\n");
-    login();
+    }
+    
     
     return 0;
 }
