@@ -8,11 +8,13 @@ typedef struct
     int accountNumber;
     char name[50];
     char email[50];
-    char mobile[15];
+    int mobile[15];
     char address[100];
     int age;
     char gender[10];
     char accountType[20];
+    char aadhar[20];
+    int isAadharLinked;
     float balance;
 } Customer;
 
@@ -23,6 +25,8 @@ void createAccount();
 void displayAccount();
 void depositMoney();
 void withdrawMoney();
+void linkAadhar();
+void updateDetails();
 
 void createAccount()
 {
@@ -50,6 +54,7 @@ void createAccount()
     printf("Enter account type (Savings/Current): ");
     scanf("%s", newCustomer.accountType);
     newCustomer.balance = 0.0;
+    newCustomer.isAadharLinked = 0; // Initially, Aadhar is not linked
 
     customers[customerCount++] = newCustomer;
 
@@ -75,6 +80,11 @@ void displayAccount()
             printf("Gender: %s\n", customers[i].gender);
             printf("Account Type: %s\n", customers[i].accountType);
             printf("Balance: %.2f\n", customers[i].balance);
+            printf("Aadhar Linked: %s\n", customers[i].isAadharLinked ? "Yes" : "No");
+            if (customers[i].isAadharLinked)
+            {
+                printf("Aadhar Number: %s\n", customers[i].aadhar);
+            }
             return;
         }
     }
@@ -82,23 +92,19 @@ void displayAccount()
     printf("Account not found!\n");
 }
 
-void depositMoney()
-{
+void depositMoney() {
     int accountNumber;
     float amount;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
 
-    for (int i = 0; i < customerCount; i++)
-    {
-        if (customers[i].accountNumber == accountNumber)
-        {
+    for (int i = 0; i < customerCount; i++) {
+        if (customers[i].accountNumber == accountNumber) {
             printf("Enter amount to deposit: ");
             scanf("%f", &amount);
 
-            if (amount <= 0)
-            {
+            if (amount <= 0) {
                 printf("Invalid amount!\n");
                 return;
             }
@@ -112,29 +118,24 @@ void depositMoney()
     printf("Account not found!\n");
 }
 
-void withdrawMoney()
-{
+void withdrawMoney() {
     int accountNumber;
     float amount;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
 
-    for (int i = 0; i < customerCount; i++)
-    {
-        if (customers[i].accountNumber == accountNumber)
-        {
+    for (int i = 0; i < customerCount; i++) {
+        if (customers[i].accountNumber == accountNumber) {
             printf("Enter amount to withdraw: ");
             scanf("%f", &amount);
 
-            if (amount <= 0)
-            {
+            if (amount <= 0) {
                 printf("Invalid amount!\n");
                 return;
             }
 
-            if (amount > customers[i].balance)
-            {
+            if (amount > customers[i].balance) {
                 printf("Insufficient balance!\n");
                 return;
             }
@@ -143,11 +144,62 @@ void withdrawMoney()
             printf("Amount withdrawn successfully! New balance: %.2f\n", customers[i].balance);
             return;
         }
+    }    
+
+    printf("Account not found!\n");
+}
+
+void linkAadhar()
+{
+    int accountNumber;
+    char aadhar[20];
+
+    printf("Enter account number: ");
+    scanf("%d", &accountNumber);
+
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].accountNumber == accountNumber)
+        {
+            printf("Enter Aadhar number: ");
+            scanf("%s", aadhar);
+
+            strcpy(customers[i].aadhar, aadhar);
+            customers[i].isAadharLinked = 1;
+
+            printf("Aadhar linked successfully!\n");
+            return;
+        }
     }
 
     printf("Account not found!\n");
 }
 
+void updateDetails()
+{
+    int accountNumber;
+
+    printf("Enter account number: ");
+    scanf("%d", &accountNumber);
+
+    for (int i = 0; i < customerCount; i++)
+    {
+        if (customers[i].accountNumber == accountNumber)
+        {
+            printf("Update email: ");
+            scanf("%s", customers[i].email);
+            printf("Update mobile number: ");
+            scanf("%s", customers[i].mobile);
+            printf("Update address: ");
+            scanf(" %s", customers[i].address);
+
+            printf("Details updated successfully!\n");
+            return;
+        }
+    }
+
+    printf("Account not found!\n");
+}
 void main()
 {
     int choice, a;
