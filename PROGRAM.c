@@ -165,7 +165,7 @@ void loadEmployee()
 
 void saveCustomers()
 {
-    FILE *file = fopen(CUSTOMER_FILE, "wb");
+    FILE *file = fopen(CUSTOMER_FILE, "ab");
     if (file)
     {
         fwrite(&customerCount, sizeof(int), 1, file);
