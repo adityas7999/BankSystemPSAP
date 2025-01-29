@@ -69,45 +69,28 @@ void program();
 void login()
 {
     loadEmployee();
-    char username1[10];
-    char password1[8];
+    char username1[20];  // Increased buffer size
+    char password1[20];  // Increased buffer size
+
     printf("Enter your username: ");
-    scanf("%s", username1);
-    printf("Enter your password (8 chars): ");
-    scanf("%s", password1);
+    scanf("%19s", username1); // Avoid buffer overflow
+    printf("Enter your password: ");
+    scanf("%19s", password1); // Avoid buffer overflow
+
     for (int i = 0; i < employeeCount; i++)
     {
         if (strcmp(employee[i].username, username1) == 0 && strcmp(employee[i].password, password1) == 0)
         {
-            switch (i)
-            {
-            case 0:
-                CUSTOMER_FILE = "customers0.dat";
-                user=0;
-                
-                break;
-            case 1:
-                CUSTOMER_FILE = "customers1.dat";
-                user=1;
-                
-                break;
-            case 2:
-                CUSTOMER_FILE = "customers2.dat";
-                user=2;
-               
-                break;
-            default:
-                printf("Invalid employee index\n");
-                return;
-            }
-           loadCustomers();
+            CUSTOMER_FILE = (i == 0) ? "customers0.dat" : (i == 1) ? "customers1.dat" : "customers2.dat";
+            user = i;
+            loadCustomers();
             return;
         }
-        
     }
-    user=9;
+    user = 9;
     printf("Entered details are incorrect\n");
 }
+
 void clearInputBuffer()
 {
     int c;
@@ -165,7 +148,7 @@ void loadEmployee()
 
 void saveCustomers()
 {
-    FILE *file = fopen(CUSTOMER_FILE, "ab");
+    FILE *file = fopen(CUSTOMER_FILE, "wb");
     if (file)
     {
         fwrite(&customerCount, sizeof(int), 1, file);
@@ -273,10 +256,12 @@ void displayAccount()
     scanf("%d", &accountNumber);
     clearInputBuffer();
 
+    int found = 0;
     for (int i = 0; i < customerCount; i++)
     {
         if (customers[i].accountNumber == accountNumber)
         {
+            found = 1;
             printf("\n--- Account Details ---\n");
             printf("Account Number: %d\n", customers[i].accountNumber);
             printf("Name: %s\n", customers[i].name);
@@ -293,18 +278,19 @@ void displayAccount()
                 printf("KYC Completed: Yes\n");
             else
                 printf("KYC Completed: No\n");
-        }
-        else
-        {
-            printf("Account not found!\n");
+            break;
         }
     }
+    if (!found)
+        printf("Account not found!\n");
 }
+
 
 void depositMoney()
 {
     int accountNumber;
     float amount;
+    int found = 0;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
@@ -314,6 +300,7 @@ void depositMoney()
     {
         if (customers[i].accountNumber == accountNumber)
         {
+            found = 1;
             printf("Enter amount to deposit: ");
             scanf("%f", &amount);
             clearInputBuffer();
@@ -331,17 +318,17 @@ void depositMoney()
             printf("Deposit successful! New balance: %.2f\n", customers[i].balance);
             return;
         }
-        else
-        {
-            printf("Account not found!\n");
-        }
     }
+    if (!found)
+        printf("Account not found!\n");
 }
+
 
 void withdrawMoney()
 {
     int accountNumber;
     float amount;
+    int found = 0;
 
     printf("Enter account number: ");
     scanf("%d", &accountNumber);
@@ -351,6 +338,7 @@ void withdrawMoney()
     {
         if (customers[i].accountNumber == accountNumber)
         {
+            found = 1;
             printf("Enter amount to withdraw: ");
             scanf("%f", &amount);
             clearInputBuffer();
@@ -368,11 +356,9 @@ void withdrawMoney()
             printf("Withdrawal successful! New balance: %.2f\n", customers[i].balance);
             return;
         }
-        else
-        {
-            printf("Account not found!\n");
-        }
     }
+    if (!found)
+        printf("Account not found!\n");
 }
 
 void showTransactionHistory()
