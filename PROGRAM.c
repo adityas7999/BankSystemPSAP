@@ -69,13 +69,13 @@ void program();
 void login()
 {
     loadEmployee();
-    char username1[20];  // Increased buffer size
-    char password1[20];  // Increased buffer size
-
+    char username1[20];  
+    char password1[20];  
+    
     printf("Enter your username: ");
-    scanf("%19s", username1); // Avoid buffer overflow
+    scanf("%19s", username1); 
     printf("Enter your password: ");
-    scanf("%19s", password1); // Avoid buffer overflow
+    scanf("%19s", password1); 
 
     for (int i = 0; i < employeeCount; i++)
     {
